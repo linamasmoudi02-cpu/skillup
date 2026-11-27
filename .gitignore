@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Sauvegarde de l ancienne version (aussi dans git, commit 854a54d)
+_ancienne-version

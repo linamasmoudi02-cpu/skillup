@@ -1,0 +1,461 @@
+/* ==========================================================
+   Mise en page : coque, barre latérale, barre supérieure, nav mobile
+   Bureau ≥ 1100px · Tablette 720–1099px (rail d'icônes) · Mobile < 720px
+   ========================================================== */
+
+.shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--layout-rail) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.shell__main {
+  min-width: 0;
+  padding: 0 clamp(18px, 3.5vw, 56px) 72px;
+}
+
+.page {
+  max-width: var(--layout-max);
+  margin: 0 auto;
+}
+
+/* ---------- Barre latérale : sobre, comme une table des matières ---------- */
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-10);
+  padding: 30px 18px 22px;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+}
+
+[data-theme='dark'] .sidebar {
+  background: var(--bg-2);
+}
+
+.sidebar__brand {
+  padding: 0 10px;
+}
+
+.sidebar__logo-mark {
+  display: none;
+}
+
+.sidebar__nav {
+  display: grid;
+  gap: 2px;
+}
+
+/* Petit titre de section au-dessus de la navigation */
+.sidebar__nav::before {
+  content: 'Navigation';
+  padding: 0 12px 10px;
+  font-size: 0.66rem;
+  font-weight: 650;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sidebar__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  color: var(--text-2);
+  font-weight: 560;
+  font-size: var(--fs-sm);
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+.sidebar__link:hover {
+  color: var(--text);
+  background: var(--surface-sunk);
+}
+
+.sidebar__link.active {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.sidebar__active {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent-soft);
+}
+
+/* Filet vertical à gauche de l'élément actif */
+.sidebar__active::before {
+  content: '';
+  position: absolute;
+  left: -18px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+
+.sidebar__icon,
+.sidebar__label,
+.sidebar__index,
+.sidebar__badge {
+  position: relative;
+}
+
+.sidebar__icon {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.sidebar__link.active .sidebar__icon {
+  color: var(--accent-2);
+}
+
+[data-theme='dark'] .sidebar__link.active .sidebar__icon {
+  color: var(--accent);
+}
+
+.sidebar__label {
+  flex: 1;
+}
+
+.sidebar__index {
+  font-size: 0.66rem;
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.sidebar__badge {
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: var(--primary);
+  background: var(--sand);
+}
+
+.sidebar__link:has(.sidebar__badge) .sidebar__index {
+  display: none;
+}
+
+.sidebar__goal {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
+.sidebar__goal-pct {
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.sidebar__goal-text {
+  display: grid;
+  gap: 4px;
+}
+
+.sidebar__goal-text .eyebrow::before {
+  display: none;
+}
+
+.sidebar__goal-text strong {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+}
+
+/* ---------- Barre supérieure ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  --pad: clamp(18px, 3.5vw, 56px);
+  margin: 0 calc(-1 * var(--pad)) 12px;
+  padding: 16px calc(var(--pad) + max(0px, (100% - var(--layout-max)) / 2));
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar__mobile-logo {
+  display: none;
+}
+
+.topbar__title {
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar__title > div {
+  display: grid;
+  gap: 2px;
+}
+
+.topbar__page {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 450;
+  letter-spacing: -0.015em;
+}
+
+.topbar__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(320px, 32vw);
+  height: 40px;
+  padding: 0 8px 0 14px;
+  border-radius: 12px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: var(--fs-sm);
+  transition: border-color var(--t-fast);
+}
+
+.topbar__search span {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.topbar__search:hover {
+  border-color: var(--line-strong);
+}
+
+.topbar__search-icon {
+  display: none;
+}
+
+/* Fine ligne qui se trace au changement de page */
+.route-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  transform-origin: left;
+  background: var(--accent);
+  pointer-events: none;
+}
+
+.profile {
+  position: relative;
+}
+
+.profile__btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  padding: 2px;
+  background: var(--sand);
+}
+
+.profile__avatar {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+
+[data-theme='dark'] .profile__avatar {
+  background: var(--bg-3);
+  color: var(--sand);
+}
+
+.profile__danger {
+  display: grid;
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-sm);
+}
+
+/* ---------- Navigation mobile ---------- */
+.mobile-nav {
+  display: none;
+}
+
+/* ---------- Tablette : rail d'icônes ---------- */
+@media (max-width: 1099px) {
+  .shell {
+    grid-template-columns: 84px minmax(0, 1fr);
+  }
+
+  .sidebar {
+    padding: 24px 12px;
+    align-items: center;
+  }
+
+  .sidebar__logo-full,
+  .sidebar__label,
+  .sidebar__index,
+  .sidebar__goal-text,
+  .sidebar__nav::before {
+    display: none;
+  }
+
+  .sidebar__logo-mark {
+    display: block;
+  }
+
+  .sidebar__brand {
+    padding: 0;
+  }
+
+  .sidebar__link {
+    width: 52px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .sidebar__active::before {
+    left: -12px;
+  }
+
+  .sidebar__badge {
+    position: absolute;
+    top: 4px;
+    right: 2px;
+    min-width: 18px;
+    height: 16px;
+    font-size: 0.6rem;
+  }
+
+  .sidebar__goal {
+    padding: 8px;
+    border-radius: 50%;
+  }
+}
+
+/* ---------- Mobile : barre d'onglets en bas ---------- */
+@media (max-width: 719px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .shell__main {
+    padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  }
+
+  .topbar {
+    padding-block: 10px;
+  }
+
+  .topbar__mobile-logo {
+    display: block;
+  }
+
+  .topbar__search {
+    display: none;
+  }
+
+  .topbar__search-icon {
+    display: inline-grid;
+  }
+
+  .topbar__page {
+    font-size: var(--fs-lg);
+  }
+
+  .topbar__title .eyebrow {
+    display: none;
+  }
+
+  .mobile-nav {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 50;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding: 6px;
+    border-radius: 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .mobile-nav__link {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    padding: 8px 0 6px;
+    border-radius: 12px;
+    color: var(--muted);
+    font-size: 0.64rem;
+    font-weight: 650;
+  }
+
+  .mobile-nav__link.active {
+    color: var(--text);
+  }
+
+  .mobile-nav__active {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--accent-soft);
+  }
+
+  .mobile-nav__icon,
+  .mobile-nav__label {
+    position: relative;
+  }
+
+  .mobile-nav__link.active .mobile-nav__icon {
+    color: var(--accent-2);
+  }
+
+  [data-theme='dark'] .mobile-nav__link.active .mobile-nav__icon {
+    color: var(--accent);
+  }
+
+  .mobile-nav__dot {
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--amber);
+  }
+}

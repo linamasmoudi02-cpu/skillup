@@ -1,134 +1,185 @@
+// Page de détails — route dédiée /ressources/:id (Module 1, obligatoire en binôme).
+// Charge l'œuvre depuis Open Library, affiche description et sujets,
+// permet d'ajouter aux favoris et de suivre sa progression de lecture.
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { getDetailsLivre, getCoverUrl } from '../services/openLibraryApi.js'
+import { useNavigate, useParams } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { ArrowLeft, CalendarDays, Check, ExternalLink, Heart, UserRound } from 'lucide-react'
+import { getBookDetails, getCategory, getOpenLibraryUrl, toErrorMessage } from '../services/openLibraryApi.js'
+import { useStore } from '../context/StoreContext.jsx'
+import { useToast } from '../context/ToastContext.jsx'
+import useFavorites from '../hooks/useFavorites.js'
+import { Cover } from '../components/ResourceCard.jsx'
+import { ErrorNotice, Loader } from '../components/Feedback.jsx'
+import { ProgressRing } from '../components/Motion.jsx'
 
-function ResourceDetails({ estFavori, onToggleFavori }) {
-  const { id } = useParams() // récupère ":id" depuis l'URL /ressources/:id
+const STEPS = [0, 25, 50, 75, 100]
+
+export default function ResourceDetails() {
+  const { id } = useParams() // ":id" de l'URL /ressources/:id
   const navigate = useNavigate()
+  const { state, dispatch, getResource } = useStore()
+  const { isFavorite, toggleFavorite } = useFavorites()
+  const toast = useToast()
 
-  const [livre, setLivre] = useState(null)
-  const [chargement, setChargement] = useState(true)
-  const [erreur, setErreur] = useState(null)
+  const [book, setBook] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   // Recharge les détails à chaque changement d'id dans l'URL
   useEffect(() => {
-    let annule = false
+    const controller = new AbortController()
+    setLoading(true)
+    setError(null)
+    getBookDetails(id, controller.signal)
+      .then((data) => setBook(data))
+      .catch((e) => {
+        if (e.name !== 'AbortError') setError(toErrorMessage(e))
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false)
+      })
+    return () => controller.abort()
+  }, [id, reloadKey])
 
-    async function charger() {
-      setChargement(true)
-      setErreur(null)
-      try {
-        const data = await getDetailsLivre(id)
-        if (!annule) setLivre(data)
-      } catch (e) {
-        if (!annule) {
-          setErreur(
-            e instanceof TypeError
-              ? 'Impossible de contacter le serveur. Vérifiez votre connexion internet.'
-              : e.message,
-          )
-        }
-      } finally {
-        if (!annule) setChargement(false)
-      }
-    }
+  const back = (
+    <button type="button" className="back-link" onClick={() => navigate(-1)}>
+      <ArrowLeft size={16} /> Retour
+    </button>
+  )
 
-    charger()
-    return () => {
-      annule = true
-    }
-  }, [id])
-
-  if (chargement) {
+  if (loading) {
     return (
-      <div className="text-center py-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Chargement...</span>
-        </div>
+      <div className="details-page">
+        {back}
+        <Loader label="Chargement de la ressource…" />
       </div>
     )
   }
 
-  if (erreur) {
+  if (error) {
     return (
-      <div>
-        <div className="alert alert-danger">⚠️ {erreur}</div>
-        <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>
-          ← Retour
-        </button>
+      <div className="details-page">
+        {back}
+        <ErrorNotice title="Ressource indisponible" message={error} onRetry={() => setReloadKey((k) => k + 1)} />
       </div>
     )
   }
 
-  const cover = getCoverUrl(livre.coverId, 'L')
-  const favori = estFavori(livre.id)
+  // Ressource « résumée » (celle qu'on stocke en favori), complétée par le cache local
+  const cached = getResource(id)
+  const resource = {
+    id,
+    title: book.title,
+    author: book.author,
+    coverId: book.coverId ?? cached?.coverId ?? null,
+    year: book.year ?? cached?.year ?? null,
+    categoryId: cached?.categoryId ?? null,
+  }
+  const favorite = isFavorite(id)
+  const progress = state.progress[id] ?? 0
+  const category = getCategory(resource.categoryId)
+
+  const setProgress = (value) => {
+    dispatch({ type: 'progress/set', resource, value })
+    if (value === 100) toast('Bravo ! Lecture terminée 🎉')
+  }
 
   return (
-    <article>
-      <button type="button" className="btn btn-link px-0 mb-3" onClick={() => navigate(-1)}>
-        ← Retour
-      </button>
+    <motion.article className="details-page" initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.06 } } }}>
+      {back}
 
-      <div className="row g-4">
-        <div className="col-md-4">
-          {cover ? (
-            <img src={cover} alt={`Couverture de ${livre.titre}`} className="img-fluid rounded shadow-sm" />
-          ) : (
-            <div className="resource-cover rounded d-flex align-items-center justify-content-center text-muted">
-              Pas de couverture
+      <div className="details">
+        <motion.div className="details__cover" variants={item}>
+          <Cover resource={resource} large />
+        </motion.div>
+
+        <div className="details__info">
+          <motion.span className="eyebrow" variants={item}>
+            {category ? category.label : 'Open Library'} · {id}
+          </motion.span>
+          <motion.h1 className="details__title display" variants={item}>
+            {book.title}
+          </motion.h1>
+
+          <motion.div className="drawer__facts" variants={item}>
+            <span>
+              <UserRound size={15} /> {book.author}
+            </span>
+            {resource.year && (
+              <span>
+                <CalendarDays size={15} /> {resource.year}
+              </span>
+            )}
+          </motion.div>
+
+          <motion.div className="row details__actions" variants={item}>
+            <button type="button" className={`btn ${favorite ? 'btn--danger' : 'btn--primary'}`} onClick={() => toggleFavorite(resource)} aria-pressed={favorite}>
+              <Heart size={16} fill={favorite ? 'currentColor' : 'none'} /> {favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            </button>
+            <a className="btn" href={getOpenLibraryUrl(id)} target="_blank" rel="noreferrer noopener">
+              Voir sur Open Library <ExternalLink size={15} />
+            </a>
+          </motion.div>
+
+          <motion.section className="drawer__progress glass" variants={item}>
+            <ProgressRing value={progress} size={96} stroke={8} label="lu" />
+            <div className="drawer__progress-ctrl">
+              <label className="field__label" htmlFor="progress-range">
+                Ma progression de lecture
+              </label>
+              <input
+                id="progress-range"
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={progress}
+                onChange={(e) => setProgress(Number(e.target.value))}
+                className="range"
+                style={{ '--p': `${progress}%` }}
+              />
+              <div className="row">
+                {STEPS.map((v) => (
+                  <button key={v} type="button" className={`btn btn--sm ${progress === v ? 'btn--primary' : ''}`} onClick={() => setProgress(v)}>
+                    {v === 100 ? (
+                      <>
+                        <Check size={13} /> Terminé
+                      </>
+                    ) : (
+                      `${v} %`
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
-        </div>
+          </motion.section>
 
-        <div className="col-md-8">
-          <h1 className="h3">{livre.titre}</h1>
-          <p className="text-muted mb-1">
-            <strong>Auteur :</strong> {livre.auteur}
-          </p>
-          {livre.datePublication && (
-            <p className="text-muted mb-1">
-              <strong>Première publication :</strong> {livre.datePublication}
-            </p>
-          )}
-          <p className="text-muted">
-            <strong>Catégorie :</strong> {livre.categorie}
-          </p>
+          <motion.section variants={item}>
+            <h2 className="drawer__h3">Description</h2>
+            <p className="details__desc">{book.description ?? 'Aucune description n’est disponible pour cet ouvrage sur Open Library.'}</p>
+          </motion.section>
 
-          <button
-            type="button"
-            className={`btn mb-4 ${favori ? 'btn-warning' : 'btn-outline-warning'}`}
-            onClick={() =>
-              onToggleFavori({
-                id: livre.id,
-                titre: livre.titre,
-                auteur: livre.auteur,
-                categorie: livre.categorie,
-                coverId: livre.coverId,
-              })
-            }
-          >
-            {favori ? '★ Retirer des favoris' : '☆ Ajouter aux favoris'}
-          </button>
-
-          <h2 className="h5">Description</h2>
-          <p style={{ whiteSpace: 'pre-line' }}>{livre.description}</p>
-
-          {livre.sujets.length > 0 && (
-            <>
-              <h2 className="h5">Sujets</h2>
-              <div className="d-flex flex-wrap gap-2">
-                {livre.sujets.map((s) => (
-                  <span key={s} className="badge bg-light text-dark border">
+          {book.subjects.length > 0 && (
+            <motion.section variants={item}>
+              <h2 className="drawer__h3">Sujets</h2>
+              <div className="row">
+                {book.subjects.map((s) => (
+                  <span key={s} className="tag tag--accent">
                     {s}
                   </span>
                 ))}
               </div>
-            </>
+            </motion.section>
           )}
         </div>
       </div>
-    </article>
+    </motion.article>
   )
 }
 
-export default ResourceDetails
+const item = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+}

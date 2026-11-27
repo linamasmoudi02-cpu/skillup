@@ -1,10 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>skillup</title>
+    <meta name="description" content="SkillUp — la plateforme d'apprentissage premium pour étudiants." />
+    <meta name="theme-color" content="#f5f2ea" />
+    <title>SkillUp — Learn beyond limits</title>
+    <script>
+      // Applique le thème avant le premier rendu pour éviter un flash
+      try { var t = JSON.parse(localStorage.getItem('skillup:v2') || localStorage.getItem('skillup:v1') || '{}').theme; if (t) document.documentElement.dataset.theme = t } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
